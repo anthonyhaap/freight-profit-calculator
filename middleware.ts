@@ -1,11 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-// Routes that require an authenticated user. Route groups like (protected)
-// don't appear in the URL, so we gate by actual path segments.
 const PROTECTED_PREFIXES = ["/dashboard", "/calculator", "/loads", "/settings"];
-
-// Routes that an authenticated user should NOT see (bounce them to /dashboard).
 const AUTH_ONLY_PREFIXES = ["/login"];
 
 export async function middleware(request: NextRequest) {
@@ -15,19 +11,12 @@ export async function middleware(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    // Defensive: if env vars are missing or empty at runtime, skip auth
-    // entirely rather than 500. This will let the page render with no session.
     if (!supabaseUrl || !supabaseKey) {
-      console.error(
-        "[middleware] Missing Supabase env vars",
-        JSON.stringify({
-          hasUrl: !!supabaseUrl,
-          urlLen: supabaseUrl?.length ?? 0,
-          hasKey: !!supabaseKey,
-          keyLen: supabaseKey?.length ?? 0,
-          pathname,
-        })
-      );
+      console.error("[middleware] Missing Supabase env vars", {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseKey,
+        pathname,
+      });
       return NextResponse.next({ request });
     }
 
@@ -50,7 +39,6 @@ export async function middleware(request: NextRequest) {
       },
     });
 
-    // Refresh the session cookie if expired.
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -73,18 +61,16 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (err) {
-    // Log the real error so we can see it in Vercel runtime logs, but don't
-    // crash the request — let the page render unauthenticated.
     console.error(
       "[middleware] Unhandled error",
-      err instanceof Error ? err.message : String(err),
-      err instanceof Error ? err.stack : undefined
+      err instanceof Error ? err.message : String(err)
     );
     return NextResponse.next({ request });
   }
 }
 
 export const config = {
-  // Skip static assets, the auth callback, and the debug route.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|auth/callback|api/__debug-env|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback|api/__debug-env|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
+};
