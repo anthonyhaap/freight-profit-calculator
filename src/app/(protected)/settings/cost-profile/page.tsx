@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/require-user";
 import { CostProfilesManager } from "@/components/settings/cost-profiles-manager";
 import {
   rowToCostProfile,
@@ -8,11 +8,7 @@ import {
 } from "@/types/cost-profile";
 
 export default async function CostProfileSettingsPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser("/settings/cost-profile");
 
   const { data, error } = await supabase
     .from("cost_profiles")
@@ -34,7 +30,7 @@ export default async function CostProfileSettingsPage() {
               numbers unless you override them.
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Signed in as {user?.email ?? "unknown"}
+              Signed in as {user.email}
             </p>
           </div>
           <div className="flex gap-2">

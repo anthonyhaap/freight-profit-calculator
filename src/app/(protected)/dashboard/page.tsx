@@ -1,14 +1,9 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser("/dashboard");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Lightweight summary: total saved loads + sum of net profit for the user.
   const { data: loads, error } = await supabase
     .from("profit_calculations")
     .select("net_profit, created_at")
@@ -25,7 +20,7 @@ export default async function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Signed in as {user?.email ?? "unknown"}
+              Signed in as {user.email}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
