@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/require-user";
 
 interface LoadRow {
   id: string;
   load_name: string;
-  revenue: number;
+  origin: string | null;
+  destination: string | null;
+  total_revenue: number;
   total_miles: number;
   net_profit: number;
   profit_per_loaded_mile: number;
@@ -24,12 +26,12 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 });
 
 export default async function LoadsPage() {
-  const supabase = await createClient();
+  const { supabase } = await requireUser("/loads");
 
   const { data: loads, error } = await supabase
     .from("profit_calculations")
     .select(
-      "id, load_name, revenue, total_miles, net_profit, profit_per_loaded_mile, profit_per_hour, created_at"
+      "id, load_name, origin, destination, total_revenue, total_miles, net_profit, profit_per_loaded_mile, profit_per_hour, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -45,12 +47,20 @@ export default async function LoadsPage() {
               {rows.length} {rows.length === 1 ? "load" : "loads"} saved
             </p>
           </div>
-          <Link
-            href="/calculator"
-            className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:bg-gray-800"
-          >
-            New calculation
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/dashboard"
+              className="rounded-md border border-gray-300 bg-white text-gray-700 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/calculator"
+              className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:bg-gray-800"
+            >
+              New calculation
+            </Link>
+          </div>
         </div>
 
         {error && (
@@ -78,6 +88,7 @@ export default async function LoadsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <Th>Load</Th>
+                    <Th>Lane</Th>
                     <Th>Date</Th>
                     <Th align="right">Revenue</Th>
                     <Th align="right">Miles</Th>
@@ -89,6 +100,10 @@ export default async function LoadsPage() {
                 <tbody className="divide-y divide-gray-200">
                   {rows.map((row) => {
                     const profitable = Number(row.net_profit) >= 0;
+                    const lane =
+                      row.origin && row.destination
+                        ? `${row.origin} → ${row.destination}`
+                        : "—";
                     return (
                       <tr key={row.id} className="hover:bg-gray-50">
                         <Td>
@@ -96,9 +111,12 @@ export default async function LoadsPage() {
                             {row.load_name}
                           </span>
                         </Td>
+                        <Td>
+                          <span className="text-xs text-gray-600">{lane}</span>
+                        </Td>
                         <Td>{dateFmt.format(new Date(row.created_at))}</Td>
                         <Td align="right">
-                          {currency.format(Number(row.revenue))}
+                          {currency.format(Number(row.total_revenue))}
                         </Td>
                         <Td align="right">
                           {Number(row.total_miles).toLocaleString()}
