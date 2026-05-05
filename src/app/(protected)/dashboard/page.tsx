@@ -28,7 +28,7 @@ export default async function DashboardPage() {
               Signed in as {user?.email ?? "unknown"}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Link
               href="/calculator"
               className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:bg-gray-800"
@@ -40,6 +40,12 @@ export default async function DashboardPage() {
               className="rounded-md border border-gray-300 bg-white text-gray-700 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
             >
               View loads
+            </Link>
+            <Link
+              href="/settings/cost-profile"
+              className="rounded-md border border-gray-300 bg-white text-gray-700 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
+            >
+              Cost profile
             </Link>
           </div>
         </div>
